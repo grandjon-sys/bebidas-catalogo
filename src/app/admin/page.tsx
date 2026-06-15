@@ -52,18 +52,24 @@ export default function AdminPage() {
   }, [autenticado, carregarProdutos]);
 
   const handleLogin = async () => {
-    setErroSenha('');
-    // Testa a senha tentando buscar produtos (a API vai barrar se errada)
-    const res = await fetch('/api/reservas', {
-      headers: { 'x-admin-password': senhaInput },
+  setErroSenha('');
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: senhaInput }),
     });
+
     if (res.ok) {
       sessionStorage.setItem(SENHA_KEY, senhaInput);
       setAutenticado(true);
     } else {
       setErroSenha('Senha incorreta.');
     }
-  };
+  } catch {
+    setErroSenha('Erro ao conectar. Tente novamente.');
+  }
+};
 
   const handleSalvar = async (dados: Omit<Produto, 'id' | 'criado_em' | 'ativo'>) => {
     const isEdicao = !!produtoEditando;
