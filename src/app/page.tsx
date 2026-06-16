@@ -69,7 +69,8 @@ export default function CatalogoPage() {
 
       {/* Header */}
       <header className="bg-gradient-to-r from-orange-600 to-orange-500 text-white sticky top-0 z-30 shadow-lg">
-        <div className="max-w-2xl mx-auto px-4 py-4">
+        {/* ✅ max-w aumentado para desktop */}
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
             <Beer className="w-7 h-7" />
             <h1 className="text-xl font-black tracking-tight">
@@ -77,8 +78,8 @@ export default function CatalogoPage() {
             </h1>
           </div>
 
-          {/* Barra de busca */}
-          <div className="relative">
+          {/* Barra de busca — limitada para não ficar enorme no desktop */}
+          <div className="relative max-w-xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
             <input
               type="text"
@@ -95,11 +96,13 @@ export default function CatalogoPage() {
       </header>
 
       {/* Conteúdo */}
-      <main className="max-w-2xl mx-auto px-4 pt-5">
+      {/* ✅ max-w aumentado para desktop */}
+      <main className="max-w-7xl mx-auto px-4 pt-5">
         {carregando ? (
           // Skeleton loading
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
+          // ✅ Grid responsivo: 2 mobile → 3 tablet → 4 desktop → 5 telas grandes
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="card animate-pulse">
                 <div className="aspect-square bg-gray-200" />
                 <div className="p-3 space-y-2">
@@ -124,7 +127,8 @@ export default function CatalogoPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          // ✅ Grid responsivo: 2 mobile → 3 tablet → 4 desktop → 5 telas grandes
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {produtosFiltrados.map((produto) => (
               <CatalogCard
                 key={produto.id}
