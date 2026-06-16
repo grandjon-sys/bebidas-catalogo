@@ -56,7 +56,7 @@ export function CatalogCard({ produto, onReservar }: CatalogCardProps) {
 
         {/* Preço */}
         {produto.preco && (
-          <p className="text-bg-emerald-500 font-bold text-base">
+          <p className="text-orange-600 font-bold text-base">
             R$ {produto.preco.toFixed(2)}
           </p>
         )}
@@ -81,11 +81,14 @@ export function CatalogCard({ produto, onReservar }: CatalogCardProps) {
         </div>
 
         {/* Botão */}
-        <button
-          onClick={() => !semEstoque && onReservar(produto)}
-          disabled={semEstoque}
-          className="btn-primary w-full mt-auto flex items-center justify-center gap-2 text-sm py-2.5"
-        >
+       <button
+  onClick={() => !semEstoque && onReservar(produto)}
+  disabled={semEstoque}
+  className="w-full mt-auto flex items-center justify-center gap-2 text-sm py-2.5
+             rounded-xl font-semibold transition-all
+             bg-emerald-500 hover:bg-emerald-600 text-white
+             disabled:opacity-50 disabled:cursor-not-allowed"
+             >
           <ShoppingCart className="w-4 h-4" />
           {semEstoque ? 'Esgotado' : 'Reservar'}
         </button>
