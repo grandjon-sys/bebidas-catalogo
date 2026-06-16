@@ -56,7 +56,7 @@ export function CatalogCard({ produto, onReservar }: CatalogCardProps) {
 
         {/* Preço */}
         {produto.preco && (
-          <p className="text-orange-600 font-bold text-base">
+          <p className="text-bg-emerald-500 font-bold text-base">
             R$ {produto.preco.toFixed(2)}
           </p>
         )}

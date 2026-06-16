@@ -68,7 +68,7 @@ export default function CatalogoPage() {
     <div className="min-h-screen pb-10">
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 to-orange-500 text-white sticky top-0 z-30 shadow-lg">
+       <header className="bg-gradient-to-r from-gray-900 to-gray-700 text-white sticky top-0 z-30 shadow-lg">
         {/* ✅ max-w aumentado para desktop */}
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-2 mb-3">
