@@ -11,8 +11,16 @@ interface ReservaModalProps {
   onConfirmar: (dados: ReservaFormData) => Promise<void>;
 }
 
+// ✅ Chaves do localStorage
+const CACHE_NOME = 'reserva_nome';
+const CACHE_TELEFONE = 'reserva_telefone';
+
 export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProps) {
   const [carregando, setCarregando] = useState(false);
+
+  // ✅ Lê os dados salvos no localStorage ao abrir o modal
+  const nomeSalvo      = typeof window !== 'undefined' ? localStorage.getItem(CACHE_NOME)     ?? '' : '';
+  const telefoneSalvo  = typeof window !== 'undefined' ? localStorage.getItem(CACHE_TELEFONE) ?? '' : '';
 
   const {
     register,
@@ -20,7 +28,11 @@ export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProp
     formState: { errors },
     watch,
   } = useForm<ReservaFormData>({
-    defaultValues: { quantidade: 1 },
+    defaultValues: {
+      quantidade: 1,
+      nome_comprador: nomeSalvo,      // ✅ Preenche com o nome salvo
+      telefone: telefoneSalvo,        // ✅ Preenche com o telefone salvo
+    },
   });
 
   const qtd = watch('quantidade');
@@ -28,6 +40,10 @@ export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProp
   const onSubmit = async (dados: ReservaFormData) => {
     setCarregando(true);
     try {
+      // ✅ Salva nome e telefone no localStorage ao confirmar
+      localStorage.setItem(CACHE_NOME,     dados.nome_comprador);
+      localStorage.setItem(CACHE_TELEFONE, dados.telefone);
+
       await onConfirmar(dados);
     } finally {
       setCarregando(false);
@@ -131,6 +147,12 @@ export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProp
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <User className="inline w-4 h-4 mr-1" />
               Seu nome
+              {/* ✅ Aviso visual quando o campo foi preenchido pelo cache */}
+              {nomeSalvo && (
+                <span className="text-xs text-emerald-500 font-normal ml-2">
+                  ✓ salvo anteriormente
+                </span>
+              )}
             </label>
             <input
               type="text"
@@ -153,6 +175,12 @@ export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProp
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               <Phone className="inline w-4 h-4 mr-1" />
               WhatsApp
+              {/* ✅ Aviso visual quando o campo foi preenchido pelo cache */}
+              {telefoneSalvo && (
+                <span className="text-xs text-emerald-500 font-normal ml-2">
+                  ✓ salvo anteriormente
+                </span>
+              )}
             </label>
             <input
               type="tel"
@@ -190,18 +218,11 @@ export function ReservaModal({ produto, onClose, onConfirmar }: ReservaModalProp
             >
               {carregando ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="animate-spin w-4 h-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <circle
                       className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
+                      cx="12" cy="12" r="10"
+                      stroke="currentColor" strokeWidth="4"
                     />
                     <path
                       className="opacity-75"
