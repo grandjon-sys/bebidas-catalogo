@@ -1,3 +1,8 @@
+export interface Categoria {
+  id: number;
+  nome: string;
+}
+
 export interface Produto {
   id: string;
   nome: string;
@@ -7,6 +12,8 @@ export interface Produto {
   descricao: string | null;
   ativo: boolean;
   criado_em: string;
+  categoria_id: number | null;
+  categorias?: { nome: string } | null;
 }
 
 export interface Reserva {
@@ -17,7 +24,6 @@ export interface Reserva {
   quantidade: number;
   status: 'pendente' | 'confirmada' | 'cancelada';
   criado_em: string;
-  // Join com produtos
   produtos?: { nome: string };
 }
 

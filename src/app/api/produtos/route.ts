@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 
-// GET — lista todos os produtos (público)
+// GET — lista todos os produtos com categoria (público)
 export async function GET() {
   const { data, error } = await supabase
     .from('produtos')
-    .select('*')
+    .select(`
+      *,
+      categorias ( nome )
+    `)
     .eq('ativo', true)
     .order('nome');
 

@@ -1,109 +1,165 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { CatalogCard } from '@/components/CatalogCard';
 import { ReservaModal } from '@/components/ReservaModal';
 import { Toast } from '@/components/Toast';
-import { Produto, ReservaFormData } from '@/types';
+import { Produto, Categoria, ReservaFormData, ResultadoReserva } from '@/types';
 import { Beer, Search } from 'lucide-react';
 
-export default function CatalogoPage() {
-  const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [filtro, setFiltro] = useState('');
-  const [carregando, setCarregando] = useState(true);
+export default function Home() {
+  const [produtos, setProdutos]         = useState<Produto[]>([]);
+  const [categorias, setCategorias]     = useState<Categoria[]>([]);
+  const [carregando, setCarregando]     = useState(true);
+  const [busca, setBusca]               = useState('');
+  const [categoriaAtiva, setCategoriaAtiva] = useState<number | null>(null);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  const [toast, setToast] = useState<{ mensagem: string; tipo: 'sucesso' | 'erro' } | null>(null);
+  const [toast, setToast]               = useState<{
+    mensagem: string; tipo: 'sucesso' | 'erro'
+  } | null>(null);
 
-  const carregarProdutos = useCallback(async () => {
-    try {
-      const res = await fetch('/api/produtos');
-      const data = await res.json();
-      setProdutos(data);
-    } catch {
-      mostrarToast('Erro ao carregar produtos.', 'erro');
-    } finally {
-      setCarregando(false);
+  // ✅ Carrega produtos e categorias juntos
+  useEffect(() => {
+    async function carregar() {
+      setCarregando(true);
+      try {
+        const [resProdutos, resCategorias] = await Promise.all([
+          fetch('/api/produtos'),
+          fetch('/api/categorias'),
+        ]);
+        const [dataProdutos, dataCategorias] = await Promise.all([
+          resProdutos.json(),
+          resCategorias.json(),
+        ]);
+        setProdutos(Array.isArray(dataProdutos) ? dataProdutos : []);
+        setCategorias(Array.isArray(dataCategorias) ? dataCategorias : []);
+      } finally {
+        setCarregando(false);
+      }
     }
+    carregar();
   }, []);
 
-  useEffect(() => {
-    carregarProdutos();
-  }, [carregarProdutos]);
+  // ✅ Filtra por busca e categoria
+  const produtosFiltrados = useMemo(() => {
+    return produtos.filter((p) => {
+      const buscaOk = p.nome.toLowerCase().includes(busca.toLowerCase());
+      const categoriaOk = categoriaAtiva === null || p.categoria_id === categoriaAtiva;
+      return buscaOk && categoriaOk;
+    });
+  }, [produtos, busca, categoriaAtiva]);
 
-  const mostrarToast = (mensagem: string, tipo: 'sucesso' | 'erro') => {
-    setToast({ mensagem, tipo });
-  };
+  // ✅ Só exibe categorias que têm pelo menos 1 produto
+  const categoriasComProdutos = useMemo(() => {
+    const idsComProduto = new Set(produtos.map((p) => p.categoria_id));
+    return categorias.filter((c) => idsComProduto.has(c.id));
+  }, [categorias, produtos]);
 
-  const handleReservar = async (dados: ReservaFormData) => {
+  const handleReservar = async (dados: ReservaFormData): Promise<void> => {
     if (!produtoSelecionado) return;
 
-    const res = await fetch('/api/reservas/criar', {
+    const res = await fetch('/api/reservas', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        produto_id: produtoSelecionado.id,
-        ...dados,
+        produto_id:     produtoSelecionado.id,
+        nome_comprador: dados.nome_comprador,
+        telefone:       dados.telefone,
+        quantidade:     dados.quantidade,
       }),
     });
 
-    const resultado = await res.json();
+    const resultado: ResultadoReserva = await res.json();
 
     if (resultado.sucesso) {
-      mostrarToast(
-        `✅ Reserva confirmada! ID: ${resultado.reserva_id?.substring(0, 8)}...`,
-        'sucesso'
-      );
+      setToast({ mensagem: '✅ Reserva confirmada!', tipo: 'sucesso' });
       setProdutoSelecionado(null);
-      carregarProdutos();
+      // Atualiza estoque localmente
+      setProdutos((prev) =>
+        prev.map((p) =>
+          p.id === produtoSelecionado.id
+            ? { ...p, estoque: p.estoque - dados.quantidade }
+            : p
+        )
+      );
     } else {
-      mostrarToast(resultado.erro || 'Erro ao reservar.', 'erro');
+      setToast({ mensagem: resultado.erro ?? 'Erro ao reservar.', tipo: 'erro' });
     }
   };
 
-  const produtosFiltrados = produtos.filter((p) =>
-    p.nome.toLowerCase().includes(filtro.toLowerCase())
-  );
-
   return (
-    <div className="min-h-screen pb-10">
+    <div className="min-h-screen bg-gray-50 pb-10">
 
       {/* Header */}
-       <header className="bg-gradient-to-r from-gray-900 to-gray-700 text-white sticky top-0 z-30 shadow-lg">
-        {/* ✅ max-w aumentado para desktop */}
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Beer className="w-7 h-7" />
-            <h1 className="text-xl font-black tracking-tight">
-              Catálogo de Bebidas
-            </h1>
+      <header className="bg-gradient-to-r from-gray-900 to-gray-700 text-white sticky top-0 z-30 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-3">
+          <Beer className="w-7 h-7 text-amber-400 shrink-0" />
+          <div>
+            <h1 className="font-black text-xl leading-none">Catálogo de Bebidas</h1>
+            <p className="text-white/60 text-xs">Reserve suas favoritas!</p>
           </div>
+        </div>
 
-          {/* Barra de busca — limitada para não ficar enorme no desktop */}
-          <div className="relative max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70" />
+        {/* Busca */}
+        <div className="max-w-7xl mx-auto px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar produto..."
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-              className="w-full bg-white/20 backdrop-blur placeholder:text-white/70 text-white
-                         border border-white/30 rounded-xl py-2.5 pl-9 pr-4
-                         focus:outline-none focus:bg-white focus:text-gray-800
-                         focus:placeholder:text-gray-400 transition-all"
+              placeholder="Buscar bebida..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white text-gray-800
+                         text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
           </div>
         </div>
+
+        {/* ✅ Filtro de categorias */}
+        {categoriasComProdutos.length > 0 && (
+          <div className="max-w-7xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+
+            {/* Botão "Todos" */}
+            <button
+              onClick={() => setCategoriaAtiva(null)}
+              className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full
+                          transition-all border
+                          ${categoriaAtiva === null
+                            ? 'bg-amber-400 border-amber-400 text-gray-900'
+                            : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'
+                          }`}
+            >
+              🍾 Todos ({produtos.length})
+            </button>
+
+            {/* Botões de cada categoria */}
+            {categoriasComProdutos.map((cat) => {
+              const total = produtos.filter((p) => p.categoria_id === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setCategoriaAtiva(cat.id)}
+                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full
+                              transition-all border
+                              ${categoriaAtiva === cat.id
+                                ? 'bg-amber-400 border-amber-400 text-gray-900'
+                                : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'
+                              }`}
+                >
+                  {cat.nome} ({total})
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       {/* Conteúdo */}
-      {/* ✅ max-w aumentado para desktop */}
       <main className="max-w-7xl mx-auto px-4 pt-5">
         {carregando ? (
-          // Skeleton loading
-          // ✅ Grid responsivo: 2 mobile → 3 tablet → 4 desktop → 5 telas grandes
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="card animate-pulse">
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
                 <div className="aspect-square bg-gray-200" />
                 <div className="p-3 space-y-2">
                   <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -114,20 +170,19 @@ export default function CatalogoPage() {
             ))}
           </div>
         ) : produtosFiltrados.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <Beer className="w-16 h-16 mx-auto mb-3 opacity-30" />
-            <p className="font-semibold">Nenhum produto encontrado</p>
-            {filtro && (
+          <div className="text-center py-20 text-gray-400">
+            <Beer className="w-16 h-16 mx-auto mb-4 opacity-20" />
+            <p className="font-semibold text-lg">Nenhum produto encontrado</p>
+            {(busca || categoriaAtiva) && (
               <button
-                onClick={() => setFiltro('')}
-                className="text-orange-500 text-sm mt-2 underline"
+                onClick={() => { setBusca(''); setCategoriaAtiva(null); }}
+                className="mt-3 text-amber-500 underline text-sm"
               >
-                Limpar busca
+                Limpar filtros
               </button>
             )}
           </div>
         ) : (
-          // ✅ Grid responsivo: 2 mobile → 3 tablet → 4 desktop → 5 telas grandes
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {produtosFiltrados.map((produto) => (
               <CatalogCard
@@ -138,10 +193,6 @@ export default function CatalogoPage() {
             ))}
           </div>
         )}
-
-        <p className="text-center text-lg text-gray-400 mt-8">
-          Faça sua reserva e entraremos em contato 🍺
-        </p>
       </main>
 
       {/* Modal de reserva */}
