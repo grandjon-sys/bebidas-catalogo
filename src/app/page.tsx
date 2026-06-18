@@ -139,7 +139,7 @@ export default function CatalogoPage() {
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-400 mt-8">
+        <p className="text-center text-lg text-gray-400 mt-8">
           Faça sua reserva e entraremos em contato 🍺
         </p>
       </main>

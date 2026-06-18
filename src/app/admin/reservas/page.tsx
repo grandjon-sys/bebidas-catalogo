@@ -47,23 +47,29 @@ export default function ReservasPage() {
     setToast({ mensagem, tipo });
 
   // ── Carrega reservas ────────────────────────────────────────
-  const carregarReservas = useCallback(async () => {
-    setCarregando(true);
-    try {
-      const res = await fetch('/api/reservas', { headers: headers() });
-      if (!res.ok) throw new Error('Não autorizado');
-      const data = await res.json();
-      setReservas(data);
-    } catch {
-      setErro('Acesso negado. Faça login no painel admin.');
-    } finally {
-      setCarregando(false);
-    }
-  }, [headers]);
+const carregarReservas = useCallback(async () => {
+  setCarregando(true);
+  try {
+    const res = await fetch('/api/reservas', { headers: headers() });
+    if (!res.ok) throw new Error('Não autorizado');
+    const data = await res.json();
+    setReservas(Array.isArray(data) ? data : []); // ✅ garante array
+  } catch {
+    setErro('Acesso negado. Faça login no painel admin.');
+  } finally {
+    setCarregando(false);
+  }
+}, [headers]);
 
-  useEffect(() => {
-    carregarReservas();
-  }, [carregarReservas]);
+useEffect(() => {
+  // ✅ Se não tem senha salva, redireciona para o login
+  const senha = sessionStorage.getItem('admin_senha');
+  if (!senha) {
+    window.location.href = '/admin';
+    return;
+  }
+  carregarReservas();
+}, [carregarReservas]);
 
   // ── Confirmar / marcar como atendido ───────────────────────
   const handleConfirmar = async (id: string) => {
