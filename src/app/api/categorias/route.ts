@@ -7,10 +7,6 @@ export async function GET() {
     .select('*')
     .order('nome');
 
-  if (error) {
-    console.error('Erro categorias:', error);
-    return NextResponse.json({ erro: error.message }, { status: 500 });
-  }
-
+  if (error) return NextResponse.json({ erro: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
 }
