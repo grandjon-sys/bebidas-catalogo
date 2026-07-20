@@ -6,7 +6,7 @@ import { Toast } from '@/components/Toast';
 import { Produto } from '@/types';
 import {
   Settings, Plus, Edit2, Trash2,
-  Package, Eye, EyeOff, ClipboardList
+  Package, Eye, EyeOff, ClipboardList, FileText
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -154,6 +154,13 @@ export default function AdminPage() {
             >
               <ClipboardList className="w-4 h-4" />
               Reservas
+            </Link>
+            <Link
+              href="/admin/relatorios"
+              className="flex items-center gap-1 text-sm bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Relatórios
             </Link>
             <Link
               href="/"
