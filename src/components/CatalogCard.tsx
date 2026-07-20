@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { ShoppingCart, Package, AlertCircle } from 'lucide-react';
 import { Produto } from '@/types';
+import { ImageModal } from './ImageModal';
 
 interface CatalogCardProps {
   produto: Produto;
@@ -12,12 +14,18 @@ interface CatalogCardProps {
 export function CatalogCard({ produto, onReservar }: CatalogCardProps) {
   const semEstoque = produto.estoque === 0;
   const poucoEstoque = produto.estoque > 0 && produto.estoque <= 5;
+  const [showImageModal, setShowImageModal] = useState(false);
 
   return (
     <div className={`card flex flex-col ${semEstoque ? 'opacity-75' : ''}`}>
 
       {/* Imagem */}
-      <div className="relative w-full aspect-square bg-gray-100">
+      <div
+        className={`relative w-full aspect-square bg-gray-100 ${
+          produto.imagem_url ? 'cursor-zoom-in' : ''
+        }`}
+        onClick={() => produto.imagem_url && setShowImageModal(true)}
+      >
         {produto.imagem_url ? (
           <Image
             src={produto.imagem_url}
@@ -93,6 +101,15 @@ export function CatalogCard({ produto, onReservar }: CatalogCardProps) {
           {semEstoque ? 'Esgotado' : 'Reservar'}
         </button>
       </div>
+
+      {/* Modal de imagem ampliada */}
+      {showImageModal && produto.imagem_url && (
+        <ImageModal
+          imagemUrl={produto.imagem_url}
+          nome={produto.nome}
+          onClose={() => setShowImageModal(false)}
+        />
+      )}
     </div>
   );
 }
