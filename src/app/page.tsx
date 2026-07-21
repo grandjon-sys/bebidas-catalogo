@@ -42,11 +42,19 @@ export default function Home() {
 
   // ✅ Filtra por busca e categoria
   const produtosFiltrados = useMemo(() => {
-    return produtos.filter((p) => {
-      const buscaOk = p.nome.toLowerCase().includes(busca.toLowerCase());
-      const categoriaOk = categoriaAtiva === null || p.categoria_id === categoriaAtiva;
-      return buscaOk && categoriaOk;
-    });
+    return produtos
+      .filter((p) => {
+        const buscaOk = p.nome.toLowerCase().includes(busca.toLowerCase());
+        const categoriaOk = categoriaAtiva === null || p.categoria_id === categoriaAtiva;
+        return buscaOk && categoriaOk;
+      })
+      // Produtos sem estoque vão para o final, mantendo a ordem alfabética
+      // dentro de cada grupo (o sort do JS é estável).
+      .sort((a, b) => {
+        const aSemEstoque = a.estoque === 0 ? 1 : 0;
+        const bSemEstoque = b.estoque === 0 ? 1 : 0;
+        return aSemEstoque - bSemEstoque;
+      });
   }, [produtos, busca, categoriaAtiva]);
 
   // ✅ Só exibe categorias que têm pelo menos 1 produto
